@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrandTrust Wireframe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+    .navbar {
+      background-color: #333;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .card h3 {
+      margin-top: 0;
+    }
+    .button {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .button:hover {
+      background-color: #0056b3;
+    }
+    .link {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <h1>BrandTrust Prototype</h1>
+  </div>
+  <div class="container">
+    <div class="card">
+      <h3>🛒 Brand Campaign Feed</h3>
+      <p>View active campaigns, rewards, and submission deadlines.</p>
+      <a class="button" href="#creator-dashboard">Join a Campaign</a>
+    </div>
+    <div class="card" id="creator-dashboard">
+      <h3>👤 Creator Dashboard</h3>
+      <ul>
+        <li>Wallet Balance: ₹1,200</li>
+        <li>Submitted Reviews: 3</li>
+        <li>Approved: 2, Pending: 1</li>
+      </ul>
+      <a class="button" href="#submit-review">Submit New Review</a>
+    </div>
+    <div class="card" id="submit-review">
+      <h3>📝 Submit Review</h3>
+      <p>Upload your content and share your honest feedback.</p>
+      <form>
+        <label>Product Name:<br /><input type="text" /></label><br /><br />
+        <label>Upload Video/Image:<br /><input type="file" /></label><br /><br />
+        <label>Review Text:<br /><textarea rows="4" cols="40"></textarea></label><br /><br />
+        <input type="checkbox" /> I received an incentive for this review<br /><br />
+        <button class="button" type="submit">Submit</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3>🏢 Brand Dashboard</h3>
+      <p>Launch a campaign, monitor submissions, and pay verified creators.</p>
+      <a class="button" href="#">Launch Campaign</a>
+    </div>
+  </div>
+</body>
+</html>
