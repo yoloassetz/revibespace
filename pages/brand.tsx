@@ -35,7 +35,6 @@ export default function BrandDashboard() {
 
         const list = await Promise.all(
           snap.docs.map(async (d) => {
-            // Only extract the Firestore fields (no id here)
             const {
               userId,
               campaignId,
@@ -43,15 +42,22 @@ export default function BrandDashboard() {
               feedback,
               status,
               submittedAt,
-            } = d.data() as Omit<Submission, "id" | "campaignTitle">;
+            } = d.data() as {
+              userId: string;
+              campaignId: string;
+              mediaURL: string;
+              feedback: string;
+              status: string;
+              submittedAt: any;
+            };
 
             const cSnap = await getDoc(doc(db, "campaigns", campaignId));
             const campaignTitle = cSnap.exists()
-              ? (cSnap.data() as any).title
+              ? (cSnap.data() as { title: string }).title
               : "Unknown";
 
             return {
-              id: d.id,               // only specify id once
+              id: d.id,
               userId,
               campaignId,
               mediaURL,
