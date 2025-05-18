@@ -10,6 +10,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
+import Link from "next/link";
 
 type Submission = {
   id: string;
@@ -30,13 +31,11 @@ export default function BrandDashboard() {
   useEffect(() => {
     const fetchSubs = async () => {
       try {
-        // 1) fetch all submissions
         const snap = await getDocs(query(collection(db, "submissions")));
 
-        // 2) for each, fetch the campaign title and build a clean object
         const list = await Promise.all(
           snap.docs.map(async (d) => {
-            // pull only the fields you need (without id)
+            // Only extract the Firestore fields (no id here)
             const {
               userId,
               campaignId,
@@ -46,14 +45,13 @@ export default function BrandDashboard() {
               submittedAt,
             } = d.data() as Omit<Submission, "id" | "campaignTitle">;
 
-            // fetch the campaign doc to get its title
             const cSnap = await getDoc(doc(db, "campaigns", campaignId));
             const campaignTitle = cSnap.exists()
               ? (cSnap.data() as any).title
               : "Unknown";
 
             return {
-              id: d.id,
+              id: d.id,               // only specify id once
               userId,
               campaignId,
               mediaURL,
@@ -98,12 +96,11 @@ export default function BrandDashboard() {
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-bold mb-6 flex justify-between items-center">
         Brand Dashboard
-        <a
-          href="/brand/create-campaign"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        >
-          + Create Campaign
-        </a>
+        <Link href="/brand/create-campaign">
+          <a className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            + Create Campaign
+          </a>
+        </Link>
       </h1>
 
       {subs.length === 0 ? (
@@ -131,7 +128,7 @@ export default function BrandDashboard() {
               </p>
 
               <div className="mb-4">
-                {sub.mediaURL.match(/\.(mp4|webm)$/) ? (
+                {/\.(mp4|webm)$/i.test(sub.mediaURL) ? (
                   <video
                     src={sub.mediaURL}
                     controls
