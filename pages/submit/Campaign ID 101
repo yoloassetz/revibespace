@@ -1,0 +1,119 @@
+import { useRouter } from "next/router";
+import { useEffect, useState, FormEvent } from "react";
+import { auth, db, storage } from "../../lib/firebase";
+import { onAuthStateChanged, User } from "firebase/auth";
+import {
+  doc,
+  getDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+
+type Campaign = {
+  title: string;
+  reward: number;
+  brief: string;
+};
+
+export default function SubmitReview() {
+  const router = useRouter();
+  const { campaignId } = router.query as { campaignId: string };
+
+  const [user, setUser] = useState<User|null>(null);
+  const [campaign, setCampaign] = useState<Campaign|null>(null);
+  const [file, setFile] = useState<File|null>(null);
+  const [feedback, setFeedback] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  // Auth listener
+  useEffect(() => {
+    return onAuthStateChanged(auth, u => setUser(u));
+  }, []);
+
+  // Fetch campaign data
+  useEffect(() => {
+    if (!campaignId) return;
+    getDoc(doc(db, "campaigns", campaignId)).then(snap => {
+      if (snap.exists()) setCampaign(snap.data() as Campaign);
+      else alert("Campaign not found");
+    });
+  }, [campaignId]);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!user) return alert("Please sign in first");
+    if (!file) return alert("Please select a file");
+
+    setSubmitting(true);
+
+    try {
+      // 1) Upload to Storage
+      const storageRef = ref(storage, `submissions/${campaignId}/${user.uid}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+
+      // 2) Write to Firestore
+      await addDoc(collection(db, "submissions"), {
+        userId: user.uid,
+        campaignId,
+        mediaURL: url,
+        feedback,
+        status: "pending",
+        submittedAt: serverTimestamp(),
+      });
+
+      alert("Review submitted successfully!");
+      router.push("/creator");
+    } catch (err:any) {
+      console.error(err);
+      alert("Submission failed: " + err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (!campaign) return <p className="p-6">Loading campaign…</p>;
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <h1 className="text-2xl font-bold mb-4">Submit Review for:</h1>
+      <div className="bg-white p-6 rounded shadow mb-6">
+        <h2 className="text-xl">{campaign.title}</h2>
+        <p className="mt-1">Reward: ₹{campaign.reward}</p>
+        <p className="mt-1 text-sm text-gray-600">{campaign.brief}</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow space-y-4">
+        <div>
+          <label className="block mb-2 font-medium">Upload Video/Image</label>
+          <input
+            type="file"
+            accept="video/*,image/*"
+            onChange={e => setFile(e.target.files?.[0]||null)}
+            className="w-full"
+          />
+        </div>
+
+        <div>
+          <label className="block mb-2 font-medium">Your Feedback</label>
+          <textarea
+            rows={4}
+            value={feedback}
+            onChange={e => setFeedback(e.target.value)}
+            className="w-full border px-3 py-2 rounded-md"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+        >
+          {submitting ? "Submitting…" : "Submit Review"}
+        </button>
+      </form>
+    </div>
+  );
+}
