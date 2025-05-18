@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { db } from "../lib/firebase";
 import {
   collection,
-  getDocs,
   query,
-  updateDoc,
+  getDocs,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import Link from "next/link";
 
@@ -29,20 +29,16 @@ export default function BrandDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchSubs = async () => {
+    async function fetchSubs() {
       try {
-        const snap = await getDocs(query(collection(db, "submissions")));
+        const submissionsSnap = await getDocs(
+          query(collection(db, "submissions"))
+        );
 
         const list = await Promise.all(
-          snap.docs.map(async (d) => {
-            const {
-              userId,
-              campaignId,
-              mediaURL,
-              feedback,
-              status,
-              submittedAt,
-            } = d.data() as {
+          submissionsSnap.docs.map(async (docSnap) => {
+            // 1) Raw Firestore data
+            const raw = docSnap.data() as {
               userId: string;
               campaignId: string;
               mediaURL: string;
@@ -51,32 +47,36 @@ export default function BrandDashboard() {
               submittedAt: any;
             };
 
-            const cSnap = await getDoc(doc(db, "campaigns", campaignId));
-            const campaignTitle = cSnap.exists()
-              ? (cSnap.data() as { title: string }).title
+            // 2) Fetch the campaign title from campaigns collection
+            const campaignSnap = await getDoc(
+              doc(db, "campaigns", raw.campaignId)
+            );
+            const campaignTitle = campaignSnap.exists()
+              ? (campaignSnap.data() as { title: string }).title
               : "Unknown";
 
+            // 3) Return a fully-explicit object—no spreads!
             return {
-              id: d.id,
-              userId,
-              campaignId,
-              mediaURL,
-              feedback,
-              status,
-              submittedAt,
+              id: docSnap.id,
+              userId: raw.userId,
+              campaignId: raw.campaignId,
+              mediaURL: raw.mediaURL,
+              feedback: raw.feedback,
+              status: raw.status,
+              submittedAt: raw.submittedAt,
               campaignTitle,
             };
           })
         );
 
         setSubs(list);
-      } catch (err: any) {
-        console.error(err);
+      } catch (e: any) {
+        console.error("Error loading submissions:", e);
         setError("Failed to load submissions");
       } finally {
         setLoading(false);
       }
-    };
+    }
 
     fetchSubs();
   }, []);
@@ -84,13 +84,11 @@ export default function BrandDashboard() {
   const updateStatus = async (id: string, newStatus: "approved" | "rejected") => {
     try {
       await updateDoc(doc(db, "submissions", id), { status: newStatus });
-      setSubs((s) =>
-        s.map((sub) =>
-          sub.id === id ? { ...sub, status: newStatus } : sub
-        )
+      setSubs((current) =>
+        current.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
       );
-    } catch (err) {
-      console.error(err);
+    } catch (e) {
+      console.error("Error updating status:", e);
       alert("Could not update status");
     }
   };
@@ -100,14 +98,14 @@ export default function BrandDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6 flex justify-between items-center">
-        Brand Dashboard
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Brand Dashboard</h1>
         <Link href="/brand/create-campaign">
-          <a className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
             + Create Campaign
-          </a>
+          </button>
         </Link>
-      </h1>
+      </div>
 
       {subs.length === 0 ? (
         <p>No submissions yet.</p>
@@ -118,7 +116,7 @@ export default function BrandDashboard() {
               <h2 className="text-xl font-semibold mb-2">
                 {sub.campaignTitle}
               </h2>
-              <p className="text-sm text-gray-600 mb-1">
+              <p className="text-sm text-gray-600 mb-2">
                 By: {sub.userId} • Status:{" "}
                 <span
                   className={
@@ -152,7 +150,7 @@ export default function BrandDashboard() {
               <p className="mb-4">{sub.feedback}</p>
 
               {sub.status === "pending" && (
-                <div className="space-x-4">
+                <div className="flex space-x-4">
                   <button
                     onClick={() => updateStatus(sub.id, "approved")}
                     className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
