@@ -1,10 +1,11 @@
+// pages/brand.tsx
+
 import { useEffect, useState } from "react";
 import { db } from "../lib/firebase";
 import {
   collection,
   getDocs,
   query,
-  where,
   updateDoc,
   doc,
   getDoc,
@@ -30,18 +31,36 @@ export default function BrandDashboard() {
     const fetchSubs = async () => {
       try {
         // 1) fetch all submissions
-        const q = query(collection(db, "submissions"));
-        const snap = await getDocs(q);
+        const snap = await getDocs(query(collection(db, "submissions")));
 
-        // 2) for each, fetch the campaign title
+        // 2) for each, fetch the campaign title and build a clean object
         const list = await Promise.all(
           snap.docs.map(async (d) => {
-            const data = d.data() as Submission;
-            const cSnap = await getDoc(doc(db, "campaigns", data.campaignId));
+            // pull only the fields you need (without id)
+            const {
+              userId,
+              campaignId,
+              mediaURL,
+              feedback,
+              status,
+              submittedAt,
+            } = d.data() as Omit<Submission, "id" | "campaignTitle">;
+
+            // fetch the campaign doc to get its title
+            const cSnap = await getDoc(doc(db, "campaigns", campaignId));
+            const campaignTitle = cSnap.exists()
+              ? (cSnap.data() as any).title
+              : "Unknown";
+
             return {
               id: d.id,
-              ...data,
-              campaignTitle: cSnap.exists() ? cSnap.data()?.title : "Unknown",
+              userId,
+              campaignId,
+              mediaURL,
+              feedback,
+              status,
+              submittedAt,
+              campaignTitle,
             };
           })
         );
@@ -62,7 +81,9 @@ export default function BrandDashboard() {
     try {
       await updateDoc(doc(db, "submissions", id), { status: newStatus });
       setSubs((s) =>
-        s.map((sub) => (sub.id === id ? { ...sub, status: newStatus } : sub))
+        s.map((sub) =>
+          sub.id === id ? { ...sub, status: newStatus } : sub
+        )
       );
     } catch (err) {
       console.error(err);
@@ -75,14 +96,14 @@ export default function BrandDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6 flex items-center justify-between">
+      <h1 className="text-3xl font-bold mb-6 flex justify-between items-center">
         Brand Dashboard
-       <a
-         href="/brand/create-campaign"
-         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-       >
-         + Create Campaign
-       </a>
+        <a
+          href="/brand/create-campaign"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        >
+          + Create Campaign
+        </a>
       </h1>
 
       {subs.length === 0 ? (
@@ -91,7 +112,9 @@ export default function BrandDashboard() {
         <div className="space-y-6">
           {subs.map((sub) => (
             <div key={sub.id} className="bg-white p-6 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2">{sub.campaignTitle}</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                {sub.campaignTitle}
+              </h2>
               <p className="text-sm text-gray-600 mb-1">
                 By: {sub.userId} • Status:{" "}
                 <span
@@ -109,9 +132,17 @@ export default function BrandDashboard() {
 
               <div className="mb-4">
                 {sub.mediaURL.match(/\.(mp4|webm)$/) ? (
-                  <video src={sub.mediaURL} controls className="w-full max-h-64 rounded" />
+                  <video
+                    src={sub.mediaURL}
+                    controls
+                    className="w-full max-h-64 rounded"
+                  />
                 ) : (
-                  <img src={sub.mediaURL} alt="submission" className="w-full rounded" />
+                  <img
+                    src={sub.mediaURL}
+                    alt="submission"
+                    className="w-full rounded"
+                  />
                 )}
               </div>
 
