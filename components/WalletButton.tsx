@@ -1,34 +1,31 @@
 // components/WalletButton.tsx
-import { WagmiConfig, createClient, useAccount, useBalance, configureChains } from "wagmi";
-import { publicProvider } from "wagmi/providers/public";
-import { goerli } from "wagmi/chains";
+
+import { useAccount, useBalance } from "wagmi";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-const { chains, provider } = configureChains([goerli], [publicProvider()]);
-const client = createClient({ autoConnect: true, provider });
+export default function WalletButton() {
+  const { address, isConnected } = useAccount();
+  const { data, isError, isLoading } = useBalance({
+    address,
+    // Assuming Goerli; switch to your desired chain
+    chainId: 5,
+  });
 
-export function WalletPreview() {
-  const { address } = useAccount();
-  const { data } = useBalance({ address });
-
-  if (!address) return <ConnectButton />;
   return (
-    <div className="flex items-center space-x-2">
-      <span className="font-mono text-sm">{address.slice(0, 6)}…{address.slice(-4)}</span>
-      <span className="bg-green-600 text-white px-2 py-1 text-xs rounded">{data?.formatted} {data?.symbol}</span>
+    <div className="flex items-center space-x-4">
+      {/* RainbowKit’s ConnectButton */}
+      <ConnectButton showBalance={false} />
+
+      {/* Show balance once connected */}
+      {isConnected && (
+        <span className="font-medium">
+          {isLoading
+            ? "Loading…"
+            : isError
+            ? "Error"
+            : `${parseFloat(data?.formatted || "0").toFixed(4)} ${data?.symbol}`}
+        </span>
+      )}
     </div>
-  );
-}
-
-// Wrap your app in WagmiConfig 
-// in pages/_app.tsx
-import { WagmiConfig } from "wagmi";
-import { client } from "../components/WalletButton";
-
-export default function App({ Component, pageProps }) {
-  return (
-    <WagmiConfig client={client}>
-      <Component {...pageProps} />
-    </WagmiConfig>
   );
 }
