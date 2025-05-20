@@ -1,21 +1,30 @@
+// components/SuggestionBox.tsx
+
 import { useState, useEffect } from "react";
 
-type SuggestionBoxProps = {
+interface SuggestionBoxProps {
   pastReviews: any[];
-};
+}
 
 export default function SuggestionBox({ pastReviews }: SuggestionBoxProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch("/api/suggest", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pastReviews }),
-    })
-      .then((res) => res.json())
-      .then((data) => setSuggestions(data.suggestions || []))
-      .catch((err) => console.error("Suggestion error:", err));
+    async function fetchSuggestions() {
+      try {
+        const res = await fetch("/api/suggest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pastReviews }),
+        });
+        const data = await res.json();
+        setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+      } catch (err) {
+        console.error("Suggestion error:", err);
+      }
+    }
+
+    fetchSuggestions();
   }, [pastReviews]);
 
   return (
