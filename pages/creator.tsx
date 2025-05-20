@@ -1,71 +1,67 @@
-import { useEffect, useState } from "react";
-import { db } from "../lib/firebase";
-import { collection, getDocs } from "firebase/firestore";
+// pages/creator.tsx
 
-type Campaign = {
-  id: string;
-  title: string;
-  brandName: string;
-  reward: number;
-  deadline: string;
-  brief: string;
-};
+import Head from "next/head";
+import Link from "next/link";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import CampaignCard, { Campaign } from "../components/CampaignCard";
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import FilterPanel from "../components/FilterPanel";
 
 export default function CreatorDashboard() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [minReward, setMinReward] = useState<number>(0);
+  const [maxReward, setMaxReward] = useState<number>(Infinity);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchCampaigns = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "campaigns"));
-
-        console.log("Fetched snapshot:", snapshot.docs.map(doc => doc.data())); // 🔍 Debug
-
-        const data = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as Campaign[];
-
-        console.log("Mapped campaigns:", data); // 🔍 Debug
-
-        setCampaigns(data);
-        setLoading(false);
-      } catch (err: any) {
-        console.error("Error fetching campaigns:", err);
-        setError("Failed to load campaigns.");
-        setLoading(false);
-      }
-    };
-
-    fetchCampaigns();
+    async function load() {
+      const snap = await getDocs(collection(db, "campaigns"));
+      setCampaigns(snap.docs.map((d) => {
+        const data = d.data() as Campaign;
+        return { ...data, id: d.id };
+      }));
+      setLoading(false);
+    }
+    load();
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold mb-6">Creator Dashboard</h1>
+    <>
+      <Head>
+        <title>Creator Dashboard – ReVibe Space</title>
+      </Head>
+      <Header />
 
-      {loading && <p>Loading campaigns...</p>}
-      {error && <p className="text-red-600">{error}</p>}
+      <main className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <h1 className="text-3xl font-bold mb-6">Creator Dashboard</h1>
+          {loading ? (
+            <p>Loading campaigns…</p>
+          ) : campaigns.length === 0 ? (
+            <p>No campaigns available at the moment.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {campaigns.map((c) => (
+                <div key={c.id}>
+                  {/* Reuse CampaignCard but override the CTA */}
+                  <CampaignCard campaign={c} />
+                  <Link
+                    href={`/submit/${c.id}`}
+                    className="mt-2 inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                  >
+                    Submit Review
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {campaigns.map((c) => (
-          <div key={c.id} className="bg-white p-6 rounded shadow">
-            <h2 className="text-xl font-bold">{c.title}</h2>
-            <p className="text-sm text-gray-600 mb-1">{c.brandName}</p>
-            <p className="mb-1">💰 ₹{c.reward}</p>
-            <p className="mb-1">📅 Deadline: {c.deadline}</p>
-            <p className="text-sm mb-2">{c.brief}</p>
-            <button
-              onClick={() => window.location.href = `/submit/${c.id}`}
-              className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-              Submit Review
-            </button>
-          </div>
-        ))}
-      </div>
-    </div>
+      <Footer />
+    </>
   );
 }

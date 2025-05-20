@@ -1,7 +1,7 @@
-// pages/brand.tsx
-
 import { useEffect, useState } from "react";
-import { db } from "../lib/firebase";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
+import Skeleton from "../components/Skeleton";
 import {
   collection,
   query,
@@ -10,7 +10,6 @@ import {
   getDoc,
   updateDoc,
 } from "firebase/firestore";
-import Link from "next/link";
 
 type Submission = {
   id: string;
@@ -18,94 +17,73 @@ type Submission = {
   campaignId: string;
   mediaURL: string;
   feedback: string;
-  status: string;
+  rating: number;
+  status: "pending" | "approved" | "rejected";
   submittedAt: any;
-  campaignTitle?: string;
+  campaignTitle: string;
 };
 
 export default function BrandDashboard() {
   const [subs, setSubs] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
+  // Fetch submissions + campaign titles
   useEffect(() => {
-    async function fetchSubs() {
+    const fetchSubs = async () => {
       try {
-        const submissionsSnap = await getDocs(
-          query(collection(db, "submissions"))
-        );
+        // 1) fetch all submissions
+        const q = query(collection(db, "submissions"));
+        const snap = await getDocs(q);
 
+        // 2) for each, fetch the campaign title
         const list = await Promise.all(
-          submissionsSnap.docs.map(async (docSnap) => {
-            // 1) Raw Firestore data
-            const raw = docSnap.data() as {
-              userId: string;
-              campaignId: string;
-              mediaURL: string;
-              feedback: string;
-              status: string;
-              submittedAt: any;
-            };
-
-            // 2) Fetch the campaign title from campaigns collection
-            const campaignSnap = await getDoc(
-              doc(db, "campaigns", raw.campaignId)
-            );
-            const campaignTitle = campaignSnap.exists()
-              ? (campaignSnap.data() as { title: string }).title
-              : "Unknown";
-
-            // 3) Return a fully-explicit object—no spreads!
+          snap.docs.map(async (d) => {
+            const data = d.data() as Submission;
+            const cSnap = await getDoc(doc(db, "campaigns", data.campaignId));
             return {
-              id: docSnap.id,
-              userId: raw.userId,
-              campaignId: raw.campaignId,
-              mediaURL: raw.mediaURL,
-              feedback: raw.feedback,
-              status: raw.status,
-              submittedAt: raw.submittedAt,
-              campaignTitle,
+              id: d.id,
+              ...data,
+              campaignTitle: cSnap.exists() ? cSnap.data()?.title : "Unknown",
             };
           })
         );
-
         setSubs(list);
-      } catch (e: any) {
-        console.error("Error loading submissions:", e);
+      } catch (err: any) {
+        console.error(err);
         setError("Failed to load submissions");
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     fetchSubs();
   }, []);
 
+  // Approve / reject handler updates both submission and reviewer stats
   const updateStatus = async (id: string, newStatus: "approved" | "rejected") => {
     try {
+      // 1) update submission status
       await updateDoc(doc(db, "submissions", id), { status: newStatus });
-      setSubs((current) =>
-        current.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
+      setSubs((s) =>
+        s.map((sub) => (sub.id === id ? { ...sub, status: newStatus } : sub))
       );
-    } catch (e) {
-      console.error("Error updating status:", e);
+    } catch (err) {
+      console.error(err);
       alert("Could not update status");
     }
   };
 
-  if (loading) return <p className="p-6">Loading submissions…</p>;
-  if (error) return <p className="p-6 text-red-600">{error}</p>;
-
   return (
     <div className="min-h-screen bg-gray-100 p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Brand Dashboard</h1>
-        <Link href="/brand/create-campaign">
-          <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-            + Create Campaign
-          </button>
-        </Link>
-      </div>
+      <h1 className="text-3xl font-bold mb-6 flex items-center justify-between">
+        Brand Dashboard
+       <a
+         href="/brand/create-campaign"
+         className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+       >
+         + Create Campaign
+       </a>
+      </h1>
 
       {subs.length === 0 ? (
         <p>No submissions yet.</p>
@@ -113,10 +91,8 @@ export default function BrandDashboard() {
         <div className="space-y-6">
           {subs.map((sub) => (
             <div key={sub.id} className="bg-white p-6 rounded shadow">
-              <h2 className="text-xl font-semibold mb-2">
-                {sub.campaignTitle}
-              </h2>
-              <p className="text-sm text-gray-600 mb-2">
+              <h2 className="text-xl font-semibold mb-2">{sub.campaignTitle}</h2>
+              <p className="text-sm text-gray-600 mb-1">
                 By: {sub.userId} • Status:{" "}
                 <span
                   className={
@@ -132,25 +108,17 @@ export default function BrandDashboard() {
               </p>
 
               <div className="mb-4">
-                {/\.(mp4|webm)$/i.test(sub.mediaURL) ? (
-                  <video
-                    src={sub.mediaURL}
-                    controls
-                    className="w-full max-h-64 rounded"
-                  />
+                {sub.mediaURL.match(/\.(mp4|webm)$/) ? (
+                  <video src={sub.mediaURL} controls className="w-full max-h-64 rounded" />
                 ) : (
-                  <img
-                    src={sub.mediaURL}
-                    alt="submission"
-                    className="w-full rounded"
-                  />
+                  <img src={sub.mediaURL} alt="submission" className="w-full rounded" />
                 )}
               </div>
 
               <p className="mb-4">{sub.feedback}</p>
 
               {sub.status === "pending" && (
-                <div className="flex space-x-4">
+                <div className="space-x-4">
                   <button
                     onClick={() => updateStatus(sub.id, "approved")}
                     className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"

@@ -1,5 +1,9 @@
-/* styles/globals.css */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
 
-/* (Optional) Your global resets or overrides go here */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* You can leave this blank if you’re loading Tailwind via CDN */
+body {
+  font-family: "Inter", sans-serif;
+}
