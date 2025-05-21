@@ -1,12 +1,10 @@
 // pages/index.tsx
 
 import Head from "next/head";
-import Header from "../components/Header";
 import HowItWorks from "../components/HowItWorks";
-import FeaturedCampaignsSection from "../components/FeaturedCampaignsSection";
 import FilterPanel from "../components/FilterPanel";
+import FeaturedCampaignsSection from "../components/FeaturedCampaignsSection";
 import CTABanner from "../components/CTABanner";
-import Footer from "../components/Footer";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -21,16 +19,15 @@ export default function Home() {
     async function load() {
       const snap = await getDocs(collection(db, "campaigns"));
       setCampaigns(
-        snap.docs.map((d) => {
-          const { id, ...data } = d.data() as Campaign;
-          return { id: d.id, ...data };
-        })
+        snap.docs.map((d) => ({
+          ...(d.data() as Campaign),
+          id: d.id,
+        }))
       );
     }
     load();
   }, []);
 
-  // Apply reward filter
   const filtered = campaigns.filter(
     (c) => c.reward >= minReward && c.reward <= maxReward
   );
@@ -39,10 +36,10 @@ export default function Home() {
     <>
       <Head>
         <title>ReVibe Space</title>
+        <meta name="description" content="Where creators and brands meet authentically" />
       </Head>
-      <Header />
 
-      {/* Top sections */}
+      {/* Hero / How it works */}
       <HowItWorks />
 
       {/* Filter + Featured Campaigns */}
@@ -65,8 +62,6 @@ export default function Home() {
 
       {/* Call to action banner */}
       <CTABanner />
-
-      <Footer />
     </>
   );
 }

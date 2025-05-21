@@ -1,9 +1,9 @@
 // components/SuggestionBox.tsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from 'react';
 
 interface SuggestionBoxProps {
-  pastReviews: any[];
+  pastReviews: unknown[];
 }
 
 export default function SuggestionBox({ pastReviews }: SuggestionBoxProps) {
@@ -12,24 +12,27 @@ export default function SuggestionBox({ pastReviews }: SuggestionBoxProps) {
   useEffect(() => {
     async function fetchSuggestions() {
       try {
-        const res = await fetch("/api/suggest", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const res = await fetch('/api/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pastReviews }),
         });
         const data = await res.json();
-        setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+        setSuggestions(
+          Array.isArray(data.suggestions) ? data.suggestions : []
+        );
       } catch (err) {
-        console.error("Suggestion error:", err);
+        console.error('Suggestion error:', err);
       }
     }
-
     fetchSuggestions();
   }, [pastReviews]);
 
   return (
     <div className="mt-8 p-6 bg-gray-100 rounded-lg">
-      <h3 className="text-lg font-semibold mb-4">Suggested Improvements</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        Suggested Improvements
+      </h3>
       {suggestions.length > 0 ? (
         <ul className="list-disc pl-5 space-y-2">
           {suggestions.map((s, idx) => (

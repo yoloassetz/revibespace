@@ -8,21 +8,21 @@ import CampaignCard, { Campaign } from "../components/CampaignCard";
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import FilterPanel from "../components/FilterPanel";
 
 export default function CreatorDashboard() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [minReward, setMinReward] = useState<number>(0);
-  const [maxReward, setMaxReward] = useState<number>(Infinity);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     async function load() {
       const snap = await getDocs(collection(db, "campaigns"));
-      setCampaigns(snap.docs.map((d) => {
-        const data = d.data() as Campaign;
-        return { ...data, id: d.id };
-      }));
+      const list = snap.docs.map((d) => {
+        // Grab Firestore data excluding any embedded `id`
+        const data = d.data() as Omit<Campaign, "id">;
+        // Re-attach the real document ID exactly once
+        return { id: d.id, ...data };
+      });
+      setCampaigns(list);
       setLoading(false);
     }
     load();
@@ -33,11 +33,13 @@ export default function CreatorDashboard() {
       <Head>
         <title>Creator Dashboard – ReVibe Space</title>
       </Head>
+
       <Header />
 
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-6">
           <h1 className="text-3xl font-bold mb-6">Creator Dashboard</h1>
+
           {loading ? (
             <p>Loading campaigns…</p>
           ) : campaigns.length === 0 ? (
@@ -46,7 +48,6 @@ export default function CreatorDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaigns.map((c) => (
                 <div key={c.id}>
-                  {/* Reuse CampaignCard but override the CTA */}
                   <CampaignCard campaign={c} />
                   <Link
                     href={`/submit/${c.id}`}

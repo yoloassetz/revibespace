@@ -16,6 +16,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { Campaign } from "../../components/CampaignCard";
 
 export default function SubmitReview() {
   const router = useRouter();
@@ -44,7 +45,10 @@ export default function SubmitReview() {
 
       // load campaign data
       const cSnap = await getDoc(doc(db, "campaigns", campaignId));
-      setCampaignTitle(cSnap.exists() ? (cSnap.data() as any).title : "");
+      if (cSnap.exists()) {
+        const data = cSnap.data() as Pick<Campaign, "title">;
+        setCampaignTitle(data.title);
+      }
       setLoading(false);
     });
     return unsubAuth;
