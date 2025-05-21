@@ -42,23 +42,14 @@ export default function Header() {
 
         {/* Nav Links + Auth */}
         <div className="flex flex-col md:flex-row items-center md:space-x-6 space-y-2 md:space-y-0">
-          <Link
-            href="/"
-            className="hover:text-gray-200 transition"
-          >
+          <Link href="/" className="hover:text-gray-200 transition">
             Home
           </Link>
-          <Link
-            href="/creator"
-            className="hover:text-gray-200 transition"
-          >
+          <Link href="/creator" className="hover:text-gray-200 transition">
             Creator
           </Link>
           {role === "brand" && (
-            <Link
-              href="/brand"
-              className="hover:text-gray-200 transition"
-            >
+            <Link href="/brand" className="hover:text-gray-200 transition">
               Brand
             </Link>
           )}
