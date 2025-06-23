@@ -1,24 +1,24 @@
-// pages/creator.tsx
-
+// pages/campaigns.tsx
 import Head from "next/head";
 import Link from "next/link";
-import CampaignCard, { Campaign } from "../components/CampaignCard";
 import { useEffect, useState } from "react";
+import CampaignCard, { Campaign } from "../components/CampaignCard";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
-export default function CreatorDashboard() {
+export default function AllCampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function load() {
       const snap = await getDocs(collection(db, "campaigns"));
-      const list = snap.docs.map((d) => {
-        const data = d.data() as Omit<Campaign, "id">;
-        return { id: d.id, ...data };
-      });
-      setCampaigns(list);
+      setCampaigns(
+        snap.docs.map((d) => ({
+          ...(d.data() as Campaign),
+          id: d.id,
+        }))
+      );
       setLoading(false);
     }
     load();
@@ -27,27 +27,25 @@ export default function CreatorDashboard() {
   return (
     <>
       <Head>
-        <title>Creator Dashboard – ReVibe Space</title>
+        <title>All Campaigns • ReVibe Space</title>
       </Head>
-
-      <main className="min-h-screen bg-gray-50 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <h1 className="text-3xl font-bold mb-6">Creator Dashboard</h1>
-
+      <main className="min-h-screen bg-gray-50 py-16 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8 text-center">All Campaigns</h1>
           {loading ? (
-            <p>Loading campaigns…</p>
+            <p className="text-center">Loading campaigns…</p>
           ) : campaigns.length === 0 ? (
-            <p>No campaigns available at the moment.</p>
+            <p className="text-center">No campaigns found.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaigns.map((c) => (
                 <div key={c.id}>
                   <CampaignCard campaign={c} />
                   <Link
-                    href={`/submit/${c.id}`}
-                    className="mt-3 inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                    href={`/campaign/${c.id}`}
+                    className="mt-3 inline-block text-purple-600 hover:underline"
                   >
-                    Submit Review
+                    View Details →
                   </Link>
                 </div>
               ))}

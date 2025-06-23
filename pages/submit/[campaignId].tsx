@@ -1,10 +1,7 @@
 // pages/submit/[campaignId].tsx
-
-import { useRouter } from "next/router";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import { useEffect, useState, FormEvent } from "react";
-import Header from "../../components/Header";
-import Footer from "../../components/Footer";
 import Skeleton from "../../components/Skeleton";
 import { auth, db, storage } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -16,7 +13,6 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { Campaign } from "../../components/CampaignCard";
 
 export default function SubmitReview() {
   const router = useRouter();
@@ -33,8 +29,8 @@ export default function SubmitReview() {
 
   // Auth guard + load campaign title
   useEffect(() => {
-    const unsubAuth = onAuthStateChanged(auth, async (u) => {
-      if (!u) return router.replace("/");
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (!u) return router.replace("/signup");
       setUser(u);
 
       // ensure creator role
@@ -45,13 +41,10 @@ export default function SubmitReview() {
 
       // load campaign data
       const cSnap = await getDoc(doc(db, "campaigns", campaignId));
-      if (cSnap.exists()) {
-        const data = cSnap.data() as Pick<Campaign, "title">;
-        setCampaignTitle(data.title);
-      }
+      setCampaignTitle(cSnap.exists() ? (cSnap.data() as any).title : "");
       setLoading(false);
     });
-    return unsubAuth;
+    return () => unsub();
   }, [campaignId, router]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -60,7 +53,6 @@ export default function SubmitReview() {
     setSubmitting(true);
 
     try {
-      // upload media if present
       let mediaURL = "";
       if (file) {
         const storageRef = ref(
@@ -71,7 +63,6 @@ export default function SubmitReview() {
         mediaURL = await getDownloadURL(storageRef);
       }
 
-      // add Firestore doc
       await addDoc(collection(db, "submissions"), {
         campaignId,
         userId: user.uid,
@@ -94,12 +85,13 @@ export default function SubmitReview() {
   if (loading) {
     return (
       <>
-        <Header />
+        <Head>
+          <title>Loading…</title>
+        </Head>
         <main className="p-8">
           <Skeleton className="h-8 w-1/2 mb-4" />
           <Skeleton className="h-64 w-full" />
         </main>
-        <Footer />
       </>
     );
   }
@@ -109,8 +101,6 @@ export default function SubmitReview() {
       <Head>
         <title>Submit Review – {campaignTitle}</title>
       </Head>
-      <Header />
-
       <main className="min-h-screen bg-gray-50 px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-2xl sm:text-3xl font-bold mb-6">
           Submit Review for “{campaignTitle}”
@@ -147,7 +137,9 @@ export default function SubmitReview() {
 
           {/* Rating */}
           <div>
-            <label className="block font-medium mb-2">Rating (1–5 Stars)</label>
+            <label className="block font-medium mb-2">
+              Rating (1–5 Stars)
+            </label>
             <select
               required
               value={rating}
@@ -172,8 +164,6 @@ export default function SubmitReview() {
           </button>
         </form>
       </main>
-
-      <Footer />
     </>
   );
 }

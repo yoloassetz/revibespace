@@ -4,27 +4,26 @@ import Link from "next/link";
 
 export default function CTABanner() {
   return (
-    <section className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-20">
+    <section id="cta" className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-20">
       <div className="max-w-7xl mx-auto px-6 text-center space-y-6">
-        <h2 className="text-4xl font-extrabold">Ready to get started?</h2>
-        <p className="text-lg">
-          Join our transparent marketplace today.
+        <h2 className="text-4xl font-extrabold mb-4">
+          Ready to Elevate Your Brand with Authentic UGC?
+        </h2>
+        <p className="text-lg mb-8">
+          Launch your next campaign or join as a creator to start earning tokens.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          {/* Sign Up button */}
           <Link
-            href="/signup"
+            href="/brand/create-campaign"
             className="bg-white text-purple-600 px-6 py-3 rounded-md font-medium hover:bg-gray-100 transition"
           >
-            Sign Up
+            Start a Campaign
           </Link>
-
-          {/* Learn More button */}
           <Link
-            href="#how-it-works"
+            href="/creator"
             className="bg-white bg-opacity-20 text-white px-6 py-3 rounded-md font-medium hover:bg-opacity-30 transition"
           >
-            Learn More
+            Join as Creator
           </Link>
         </div>
       </div>

@@ -5,6 +5,7 @@ import HowItWorks from "../components/HowItWorks";
 import FilterPanel from "../components/FilterPanel";
 import FeaturedCampaignsSection from "../components/FeaturedCampaignsSection";
 import CTABanner from "../components/CTABanner";
+
 import { useEffect, useState } from "react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -12,20 +13,20 @@ import { Campaign } from "../components/CampaignCard";
 
 export default function Home() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
-  const [minReward, setMinReward] = useState<number>(0);
-  const [maxReward, setMaxReward] = useState<number>(Infinity);
+  const [minReward, setMinReward] = useState(0);
+  const [maxReward, setMaxReward] = useState(Infinity);
 
   useEffect(() => {
-    async function load() {
+    async function fetchCampaigns() {
       const snap = await getDocs(collection(db, "campaigns"));
       setCampaigns(
-        snap.docs.map((d) => ({
-          ...(d.data() as Campaign),
-          id: d.id,
-        }))
+        snap.docs.map((d) => {
+          const data = d.data() as Omit<Campaign, "id">;
+          return { id: d.id, ...data };
+        })
       );
     }
-    load();
+    fetchCampaigns();
   }, []);
 
   const filtered = campaigns.filter(
@@ -36,19 +37,24 @@ export default function Home() {
     <>
       <Head>
         <title>ReVibe Space</title>
-        <meta name="description" content="Where creators and brands meet authentically" />
+        <meta
+          name="description"
+          content="ReVibe Space — where creators and brands meet authentically."
+        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
       </Head>
 
-      {/* Hero / How it works */}
+      {/* Hero / How It Works Section */}
       <HowItWorks />
 
-      {/* Filter + Featured Campaigns */}
+      {/* Featured Campaigns with Filters */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
-          <h2 className="text-3xl font-bold mb-4 text-center">
+          <h2 className="text-3xl font-bold mb-6 text-center">
             Featured Campaigns
           </h2>
-          <div className="mb-6 flex justify-center">
+
+          <div className="flex justify-center mb-8">
             <FilterPanel
               onFilterChange={(min, max) => {
                 setMinReward(min);
@@ -56,11 +62,12 @@ export default function Home() {
               }}
             />
           </div>
+
           <FeaturedCampaignsSection campaigns={filtered} />
         </div>
       </section>
 
-      {/* Call to action banner */}
+      {/* Call-to-Action Banner */}
       <CTABanner />
     </>
   );

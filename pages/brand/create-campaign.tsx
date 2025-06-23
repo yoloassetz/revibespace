@@ -1,13 +1,11 @@
 // pages/brand/create-campaign.tsx
 
-import Head from 'next/head';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-import { useState } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../../lib/firebase';
+import Head from "next/head";
+import { useState } from "react";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { db } from "../../lib/firebase";
 
-interface CampaignFormData {
+interface CampaignForm {
   title: string;
   brandName: string;
   reward: number;
@@ -15,34 +13,40 @@ interface CampaignFormData {
 }
 
 export default function CreateCampaign() {
-  const [formData, setFormData] = useState<CampaignFormData>({
-    title: '',
-    brandName: '',
+  const [form, setForm] = useState<CampaignForm>({
+    title: "",
+    brandName: "",
     reward: 0,
-    deadline: '',
+    deadline: "",
   });
-  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'reward' ? Number(value) : value,
+    setForm((f) => ({
+      ...f,
+      [name]: name === "reward" ? Number(value) : value,
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
     setSubmitting(true);
+
     try {
-      await addDoc(collection(db, 'campaigns'), {
-        ...formData,
+      await addDoc(collection(db, "campaigns"), {
+        ...form,
         createdAt: serverTimestamp(),
       });
-      alert('Campaign created successfully!');
+      alert("Campaign created!");
+      setForm({ title: "", brandName: "", reward: 0, deadline: "" });
     } catch (err) {
-      console.error('Creation error:', err);
-      alert('Failed to create campaign.');
+      console.error(err);
+      alert("Error creating campaign.");
     } finally {
       setSubmitting(false);
     }
@@ -53,49 +57,76 @@ export default function CreateCampaign() {
       <Head>
         <title>Create Campaign – ReVibe Space</title>
       </Head>
-      <Header />
+
       <main className="min-h-screen bg-gray-50 p-6">
-        <h1 className="text-3xl font-bold mb-6">Create Campaign</h1>
-        <form
-          onSubmit={handleSubmit}
-          className="max-w-lg space-y-4 bg-white p-6 rounded shadow"
-        >
-          {(['title', 'brandName', 'deadline'] as const).map((field) => (
-            <div key={field}>
-              <label className="block mb-1 capitalize font-medium">
-                {field.replace(/([A-Z])/g, ' $1')}
+        <div className="max-w-md mx-auto bg-white p-6 rounded shadow">
+          <h1 className="text-2xl font-bold mb-4">
+            Create Campaign
+          </h1>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block mb-1 font-medium">
+                Title
               </label>
               <input
-                type={field === 'deadline' ? 'date' : 'text'}
-                name={field}
+                name="title"
                 required
-                value={formData[field]}
+                value={form.title}
                 onChange={handleChange}
                 className="w-full border px-3 py-2 rounded"
               />
             </div>
-          ))}
-          <div>
-            <label className="block mb-1 font-medium">Reward (₹)</label>
-            <input
-              type="number"
-              name="reward"
-              required
-              value={formData.reward}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {submitting ? 'Creating…' : 'Create Campaign'}
-          </button>
-        </form>
+            <div>
+              <label className="block mb-1 font-medium">
+                Brand Name
+              </label>
+              <input
+                name="brandName"
+                required
+                value={form.brandName}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">
+                Reward (₹)
+              </label>
+              <input
+                name="reward"
+                type="number"
+                required
+                value={form.reward}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
+            <div>
+              <label className="block mb-1 font-medium">
+                Deadline
+              </label>
+              <input
+                name="deadline"
+                type="date"
+                required
+                value={form.deadline}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+            >
+              {submitting ? "Creating…" : "Create Campaign"}
+            </button>
+          </form>
+        </div>
       </main>
-      <Footer />
     </>
   );
 }

@@ -1,82 +1,58 @@
 // components/HowItWorks.tsx
 import React from "react";
+import Link from "next/link";
 
 export default function HowItWorks() {
   const steps = [
     {
       icon: (
-        <svg
-          className="w-8 h-8 text-purple-600"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M2 5h2v10H2V5zm3 0l6-3v16L5 15V5z" />
+        <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M3 5a1 1 0 011-1h3a1 1 0 01.707.293l5 5a1 1 0 010 1.414l-5 5A1 1 0 017 15H4a1 1 0 01-1-1V5z" />
         </svg>
       ),
-      title: "Consumers Post Reviews",
-      desc:
-        "Share authentic video and text reviews of products you've used. All reviews are stored on-chain for transparency.",
-      linkText: "Earn 10–50 tokens per review",
-      linkHref: "#",
+      title: "AI-Generated UGC",
+      desc: "Use AI-driven tools to generate engaging user content at scale while maintaining authenticity.",
+      linkText: "Generate with AI →",
+      href: "/ai-ugc",
     },
     {
       icon: (
-        <svg
-          className="w-8 h-8 text-purple-600"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M5 3a3 3 0 016 0v2a3 3 0 01-6 0V3zM2 13a4 4 0 018 0v1H2v-1zM12 6a4 4 0 110 8h-1V6h1z" />
+        <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M10 2a2 2 0 00-2 2v2H6a2 2 0 00-2 2v2H2a2 2 0 00-2 2v2h2v2a2 2 0 002 2h2v2a2 2 0 002 2h2v-2h2a2 2 0 002-2v-2h2a2 2 0 002-2v-2h-2V8a2 2 0 00-2-2h-2V4a2 2 0 00-2-2h-2z" />
         </svg>
       ),
-      title: "Creators Run Campaigns",
-      desc:
-        "Apply to run marketing campaigns for brands. Create content packages and get rewarded for authentic promotion.",
-      linkText: "Earn 100–1000 tokens per campaign",
-      linkHref: "#",
+      title: "Creator-Led Campaigns",
+      desc: "Creators run transparent marketing campaigns for brands and earn rewards for genuine promotion.",
+      linkText: "Apply for Campaigns →",
+      href: "/creator",
     },
     {
       icon: (
-        <svg
-          className="w-8 h-8 text-purple-600"
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M11 2L3 14h6v4l8-12h-6z" />
+        <svg className="w-8 h-8 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M13 2L3 14h7v4l10-12h-7V2z" />
         </svg>
       ),
-      title: "On-Chain Tracking",
-      desc:
-        "All activities tracked on-chain or via smart contract proxies, ensuring transparency and immutability.",
-      linkText: "View blockchain verification",
-      linkHref: "#",
+      title: "Consumer Trust & On-Chain Verification",
+      desc: "All UGC and reviews are tracked on-chain, ensuring transparency and building consumer trust.",
+      linkText: "View On-Chain Proof →",
+      href: "/on-chain",
     },
   ];
 
   return (
-    <section className="py-16 bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+    <section className="py-16 bg-white" id="how-it-works">
       <div className="max-w-7xl mx-auto px-6 text-center">
-        <h2 className="text-3xl font-bold mb-2">How ReviewChain Works</h2>
-        <p className="text-purple-200 mb-12">
-          A transparent marketplace powered by blockchain technology
-        </p>
+        <h2 className="text-3xl font-bold mb-2">How RevibeSpace Works</h2>
+        <p className="text-gray-600 mb-12">Three pillars powering our platform</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {steps.map((s, i) => (
-            <div
-              key={i}
-              className="bg-white p-6 rounded-lg shadow-lg text-left"
-            >
+            <div key={i} className="bg-gray-50 p-6 rounded-lg shadow-lg text-left">
               <div className="mb-4">{s.icon}</div>
-              <h3 className="text-xl font-semibold mb-2 text-gray-900">
-                {s.title}
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">{s.title}</h3>
               <p className="text-gray-700 mb-4">{s.desc}</p>
-              <a
-                href={s.linkHref}
-                className="text-purple-600 hover:underline font-medium"
-              >
-                {s.linkText} →
-              </a>
+              <Link href={s.href} className="text-purple-600 hover:underline font-medium">
+                {s.linkText}
+              </Link>
             </div>
           ))}
         </div>
