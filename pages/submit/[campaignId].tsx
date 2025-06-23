@@ -14,6 +14,10 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
+interface CampaignDoc {
+  title: string;
+}
+
 export default function SubmitReview() {
   const router = useRouter();
   const { campaignId } = router.query as { campaignId: string };
@@ -41,13 +45,16 @@ export default function SubmitReview() {
 
       // load campaign data
       const cSnap = await getDoc(doc(db, "campaigns", campaignId));
-      setCampaignTitle(cSnap.exists() ? (cSnap.data() as any).title : "");
+      if (cSnap.exists()) {
+        const data = cSnap.data() as CampaignDoc;
+        setCampaignTitle(data.title);
+      }
       setLoading(false);
     });
     return () => unsub();
   }, [campaignId, router]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user || !campaignId) return;
     setSubmitting(true);
