@@ -1,6 +1,5 @@
 // pages/select-role.tsx
 import Head from "next/head";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import Header from "../components/Header";
@@ -12,7 +11,7 @@ import { doc, updateDoc } from "firebase/firestore";
 export default function SelectRolePage() {
   const router = useRouter();
 
-  // If someone hits /select-role while not signed in, send them back
+  // Redirect unauthenticated users back to signup
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       if (!u) {
@@ -24,10 +23,12 @@ export default function SelectRolePage() {
 
   const choose = async (role: "creator" | "brand") => {
     const u = auth.currentUser;
-    if (!u) return router.replace("/signup");
-    // Update their Firestore doc
+    if (!u) {
+      return router.replace("/signup");
+    }
+    // Update their Firestore user doc
     await updateDoc(doc(db, "users", u.uid), { role });
-    // Send them to their dashboard
+    // Send them to the appropriate dashboard
     router.replace(`/${role}`);
   };
 
