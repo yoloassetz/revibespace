@@ -1,85 +1,71 @@
 // components/ConnectWallet.tsx
-"use client";
+import { useEffect, useState, MouseEvent } from "react";
+import { ethers, type providers } from "ethers";
+import Web3Modal from "web3modal";
 
-import { useEffect, useState } from "react";
-import { ethers } from "ethers";
-import WalletConnectProvider from "@walletconnect/web3-provider";
+/** Narrower (and safer) type for window.ethereum */
+interface EthereumProvider extends providers.ExternalProvider {
+  isMetaMask?: boolean;
+  on?: (event: string, handler: (...args: any[]) => void) => void;
+}
+
+declare global {
+  interface Window {
+    ethereum: any; // Ensure compatibility with other declarations
+  }
+}
 
 export default function ConnectWallet() {
-  const [address, setAddress] = useState<string>("");
-  const [balance, setBalance] = useState<string>("");
+  const [address, setAddress] = useState<string | null>(null);
+  const [provider, setProvider] = useState<providers.Web3Provider | null>(null);
 
-  const connectWallet = async () => {
-    let provider: ethers.providers.Web3Provider;
-
-    try {
-      if ((window as any).ethereum) {
-        // 1️⃣ MetaMask / browser wallet
-        provider = new ethers.providers.Web3Provider(
-          (window as any).ethereum,
-          "any"
-        );
-        // Request access
-        await provider.send("eth_requestAccounts", []);
-      } else {
-        // 2️⃣ Fallback to WalletConnect
-        const wcProvider = new WalletConnectProvider({
-          infuraId: process.env.NEXT_PUBLIC_INFURA_ID,
-        });
-        // Opens QR modal
-        await wcProvider.enable();
-
-        provider = new ethers.providers.Web3Provider(
-          wcProvider as any,
-          "any"
-        );
-      }
-
-      // Read address + balance
-      const signer = provider.getSigner();
-      const addr = await signer.getAddress();
-      const bal = await provider.getBalance(addr);
-
-      setAddress(addr);
-      setBalance(ethers.utils.formatEther(bal));
-      // Optionally persist which method you used:
-      localStorage.setItem(
-        "revibe_wallet",
-        (window as any).ethereum ? "injected" : "walletconnect"
-      );
-    } catch (err) {
-      console.error("Connection failed:", err);
-    }
-  };
-
-  // Auto‐reconnect only for injected (MetaMask) on page load
+  /** Initialise Web3Modal just once on mount */
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      localStorage.getItem("revibe_wallet") === "injected"
-    ) {
-      connectWallet();
+    if (!window.ethereum) return;
+
+    const web3Modal = new Web3Modal({
+      cacheProvider: true,
+    });
+
+    /** Auto-reconnect if the user connected previously */
+    if (web3Modal.cachedProvider) {
+      connectWallet(web3Modal).catch(console.error);
     }
   }, []);
 
-  // Render
-  if (!address) {
-    return (
-      <button
-        onClick={connectWallet}
-        className="bg-white bg-opacity-20 px-3 py-1 rounded hover:bg-opacity-30 transition"
-      >
-        Connect Wallet
-      </button>
-    );
+  /** Click handler */
+  async function handleConnect(e: MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    const web3Modal = new Web3Modal({ cacheProvider: true });
+    await connectWallet(web3Modal);
+  }
+
+  /** Shared connect routine */
+  async function connectWallet(modal: Web3Modal) {
+    try {
+      const extProvider = (await modal.connect()) as EthereumProvider;
+      const web3Provider = new ethers.providers.Web3Provider(extProvider, "any");
+      const signer = await web3Provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      setProvider(web3Provider);
+      setAddress(userAddress);
+
+      // listen for account switches
+      extProvider.on?.("accountsChanged", (accounts: string[]) => {
+        setAddress(accounts[0] || null);
+      });
+    } catch (err) {
+      console.error("Wallet connect error:", err);
+    }
   }
 
   return (
-    <div className="inline-flex items-center space-x-2 font-mono text-sm">
-      <span>
-        {address.slice(0, 6)}…{address.slice(-4)}
-      </span>
-      <span>({parseFloat(balance).toFixed(4)} ETH)</span>
-    </div>
+    <button
+      onClick={handleConnect}
+      className="ml-4 rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+    >
+      {address ? `${address.slice(0, 6)}…${address.slice(-4)}` : "Connect Wallet"}
+    </button>
   );
 }
